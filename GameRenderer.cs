@@ -21,10 +21,10 @@ public unsafe class GameRenderer
     public GameRenderer(Sdl sdl, GameWindow window)
     {
         _sdl = sdl;
-        
+
         _renderer = (Renderer*)window.CreateRenderer();
         _sdl.SetRenderDrawBlendMode(_renderer, BlendMode.Blend);
-        
+
         _window = window;
         var windowSize = window.Size;
         _camera = new Camera(windowSize.Width, windowSize.Height);
@@ -60,16 +60,16 @@ public unsafe class GameRenderer
                 {
                     throw new Exception("Failed to create surface from image data.");
                 }
-                
+
                 var imageTexture = _sdl.CreateTextureFromSurface(_renderer, imageSurface);
                 if (imageTexture == null)
                 {
                     _sdl.FreeSurface(imageSurface);
                     throw new Exception("Failed to create texture from surface.");
                 }
-                
+
                 _sdl.FreeSurface(imageSurface);
-                
+
                 _textureData[_textureId] = textureInfo;
                 _texturePointers[_textureId] = (IntPtr)imageTexture;
             }
@@ -109,5 +109,51 @@ public unsafe class GameRenderer
     public void PresentFrame()
     {
         _sdl.RenderPresent(_renderer);
+    }
+
+    public void RenderFrame(PlayerObject? player = null)
+    {
+        if (player != null)
+        {
+            DrawHealthBar(player);
+        }
+
+        PresentFrame();
+    }
+
+      private void DrawHealthBar(PlayerObject player)
+    {
+        int health = player.Health;
+        int barWidth = 100;
+        int barHeight = 10;
+        int margin = 20;
+
+        int screenX = _window.Size.Width - barWidth - margin;
+        int screenY = margin;
+
+        Rectangle<int> background = new Rectangle<int>(
+            screenX,
+            screenY,
+            barWidth,
+            barHeight
+        );
+
+        Rectangle<int> foreground = new Rectangle<int>(
+            screenX,
+            screenY,
+            (int)(barWidth * (health / 100.0)),
+            barHeight
+        );
+
+        SetDrawColor(50, 50, 50, 255);
+        _sdl.RenderFillRect(_renderer, &background);
+
+        SetDrawColor(200, 0, 0, 255);
+        _sdl.RenderFillRect(_renderer, &foreground);
+    }
+
+    public Vector2D<int> GetWindowSize()
+    {
+        return new Vector2D<int>(_window.Size.Width, _window.Size.Height);
     }
 }
